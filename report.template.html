@@ -1,0 +1,430 @@
+{{- $RFC1123 := "Mon, 02 Jan 2006 15:04:05 MST" }}
+{{- $RFC3339 := "2006-01-02T15:04:05Z07:00" }}
+{{- $DateTime := "2006-01-02 15:04:05" }}
+{{- $reportID := uuidv4 }}
+{{- $reportTime := now }}
+{{- $reportVersion := "v1.0.0" }}
+{{- $severityCritical := 0 }}
+{{- $severityHigh := 0 }}
+{{- $severityMedium := 0 }}
+{{- $severityLow := 0 }}
+{{- $severityUnknown := 0 }}
+{{- range . }}
+{{- range .Vulnerabilities }}
+{{- $severityCritical = eq .Severity "CRITICAL" | ternary 1 0 | add $severityCritical }}
+{{- $severityHigh = eq .Severity "HIGH" | ternary 1 0 | add $severityHigh }}
+{{- $severityMedium = eq .Severity "MEDIUM" | ternary 1 0 | add $severityMedium }}
+{{- $severityLow = eq .Severity "LOW" | ternary 1 0 | add $severityLow }}
+{{- $severityUnknown = eq .Severity "UNKNOWN" | ternary 1 0 | add $severityUnknown }}
+{{- end }}
+{{- end -}}
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0" />
+	<title>Trivy Security Scan Report - {{ $reportID }}</title>
+	<link rel="stylesheet"
+		href="tailwind.css" />
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	<style>
+		:root {
+			--primary: #2563eb;
+			--critical: #991b1b;
+			--critical-bg: #fee2e2;
+			--high: #c2410c;
+			--high-bg: #ffedd5;
+			--medium: #b45309;
+			--medium-bg: #fef3c7;
+			--low: #1e40af;
+			--low-bg: #dbeafe;
+			--unknown: #475569;
+			--unknown-bg: #f1f5f9;
+		}
+
+		body {
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		.sev-CRITICAL {
+			background-color: var(--critical-bg);
+			color: var(--critical);
+		}
+
+		.sev-HIGH {
+			background-color: var(--high-bg);
+			color: var(--high);
+		}
+
+		.sev-MEDIUM {
+			background-color: var(--medium-bg);
+			color: var(--medium);
+		}
+
+		.sev-LOW {
+			background-color: var(--low-bg);
+			color: var(--low);
+		}
+
+		.sev-UNKNOWN {
+			background-color: var(--unknown-bg);
+			color: var(--unknown);
+		}
+
+		/* Print Optimization */
+		@media print {
+			.container {
+				max-width: 100%;
+				width: 100%;
+			}
+
+			header,
+			.summary-card,
+			.table-container {
+				box-shadow: none;
+				border: 1px solid #cbd5e1;
+				break-inside: avoid;
+			}
+
+			tr {
+				break-inside: avoid;
+			}
+		}
+
+		.metadata-grid {
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		}
+	</style>
+</head>
+
+<body class="bg-gray-50 print:bg-white">
+	<!-- Report -->
+	<main class="max-w-300 grid gap-y-8 mx-auto p-8 print:p-0">
+		<!-- Report Header -->
+		<header
+			class="grid gap-6 p-8 border border-solid border-gray-200 bg-white shadow-xs print:shadow-none rounded-xl">
+			<h1 class="text-3xl font-bold">
+				Trivy Security Scan Report
+				<span class="bg-teal-500 rounded-full text-base px-2 text-white align-text-top">{{ $reportVersion
+					}}</span>
+			</h1>
+
+			<hr class="border-solid border-gray-200" />
+
+			<div class="flex flex-wrap gap-4">
+				<div class="flex-1 grid gap-1">
+					<div class="text-xs font-bold text-gray-600 uppercase tracking-wide">ID</div>
+					<div>{{ $reportID }}</div>
+				</div>
+				<div class="flex-1 grid gap-1">
+					<div class="text-xs font-bold text-gray-600 uppercase tracking-wide">Time</div>
+					<div>
+						<time datetime="{{ $reportTime | date $RFC3339 }}">{{ $reportTime | date $DateTime
+							}}</time>
+					</div>
+				</div>
+				<div class="flex-1 basis-full grid gap-1">
+					<div class="text-xs font-bold text-gray-600 uppercase tracking-wide">Checksum</div>
+					<div>
+						<code
+							class="inline-block min-w-0 bg-slate-50 border border-gray-200 rounded-sm px-1 wrap-anywhere font-[monospace]"
+							title="$.Results">sha256:{{ . | toJson | sha256sum }}</code>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<h2 class="text-2xl font-bold">Severity Levels</h2>
+
+		<!-- Summary Statistics Grid -->
+		<div class="flex flex-wrap gap-4 print:grid">
+			<div
+				class="flex-1 basis-xs relative grid gap-y-2 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden print:grid-cols-4 print:grid-rows-2 print:gap-y-0 print:ps-18">
+				<div class="font-bold tracking-wide">Critical</div>
+				<div
+					class="text-4xl font-bold text-red-600 print:col-span-3 print:row-span-2 print:self-center print:text-end">
+					{{ $severityCritical }}
+				</div>
+				<div class="text-xs">CVSS score between 9.0 and 10.0</div>
+				<div
+					class="absolute size-10 top-4 right-4 bg-red-500/10 p-2 rounded-lg text-red-600 print:inset-4 print:right-auto print:my-auto">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-octagon-alert preview-icon">
+						<path d="M12 16h.01" />
+						<path d="M12 8v4" />
+						<path
+							d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z" />
+					</svg>
+				</div>
+			</div>
+
+			<div
+				class="flex-1 basis-xs relative grid gap-y-4 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden">
+				<div class="font-bold tracking-wide">High</div>
+				<div class="text-4xl font-bold text-orange-600">{{ $severityHigh }}</div>
+				<div class="text-xs">CVSS score between 7.0 and 8.9</div>
+				<div class="absolute top-4 right-4 bg-orange-500/10 p-2 rounded-lg text-orange-600">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-triangle-alert preview-icon">
+						<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+						<path d="M12 9v4" />
+						<path d="M12 17h.01" />
+					</svg>
+				</div>
+			</div>
+
+			<div
+				class="flex-1 basis-xs relative grid gap-y-4 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden">
+				<div class="font-bold tracking-wide">Medium</div>
+				<div class="text-4xl font-bold text-yellow-600">{{ $severityMedium }}</div>
+				<div class="text-xs">CVSS score between 4.0 and 6.9</div>
+				<div class="absolute top-4 right-4 bg-yellow-500/10 p-2 rounded-lg text-yellow-600">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-circle-alert preview-icon">
+						<circle cx="12"
+							cy="12"
+							r="10" />
+						<line x1="12"
+							x2="12"
+							y1="8"
+							y2="12" />
+						<line x1="12"
+							x2="12.01"
+							y1="16"
+							y2="16" />
+					</svg>
+				</div>
+			</div>
+
+			<div
+				class="flex-1 basis-xs relative grid gap-y-4 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden">
+				<div class="font-bold tracking-wide">Low</div>
+				<div class="text-4xl font-bold text-blue-600">{{ $severityLow }}</div>
+				<div class="text-xs">CVSS score between 0.1 and 3.9</div>
+				<div class="absolute top-4 right-4 bg-blue-500/10 p-2 rounded-lg text-blue-600">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-info preview-icon">
+						<circle cx="12"
+							cy="12"
+							r="10" />
+						<path d="M12 16v-4" />
+						<path d="M12 8h.01" />
+					</svg>
+				</div>
+			</div>
+
+			<div
+				class="flex-1 basis-xs relative grid gap-y-4 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden">
+				<div class="font-bold tracking-wide">Unknown</div>
+				<div class="text-4xl font-bold text-gray-600">{{ $severityUnknown }}</div>
+				<div class="text-xs">CVSS score not available</div>
+				<div class="absolute top-4 right-4 bg-gray-500/10 p-2 rounded-lg text-gray-600">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="lucide lucide-circle-question-mark preview-icon">
+						<circle cx="12"
+							cy="12"
+							r="10" />
+						<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+						<path d="M12 17h.01" />
+					</svg>
+				</div>
+			</div>
+		</div>
+
+		<h2 class="text-2xl font-bold">Vulnerabilities</h2>
+
+		{{- range . }}
+		<div class="bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none overflow-auto">
+			<div class="bg-slate-50 font-bold px-4 py-3">{{ .Type }}</div>
+
+			{{- if (gt (len .Vulnerabilities) 0) }}
+			<table class="w-full border-t border-gray-200 border-collapse text-xs">
+				<thead class="bg-slate-100 uppercase font-bold tracking-wide">
+					<tr>
+						<th class="w-1/5 px-4 py-3 text-start">Package</th>
+						<th class="w-1/5 px-4 py-3 text-start">Vulnerability ID</th>
+						<th class="w-1/5 px-4 py-3 text-start">Severity</th>
+						<th class="w-1/5 px-4 py-3 text-start">Installed</th>
+						<th class="w-1/5 px-4 py-3 text-start">Fixed</th>
+					</tr>
+				</thead>
+
+				<tbody class="align-text-top">
+					{{- range .Vulnerabilities }}
+					<tr class="border-t border-gray-200">
+						<td class="px-4 py-3">
+							<span class="font-bold"
+								title="{{ .PkgID }}">{{ .PkgName }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="font-mono font-bold text-blue-600"
+								title="{{ .Fingerprint }}">
+								{{- if .PrimaryURL }}
+								<a href="{{ .PrimaryURL }}"
+									target="_blank"
+									class="border-b">
+									{{ .VulnerabilityID }}</a>
+								{{- else }}
+								{{ .VulnerabilityID }}
+								{{- end }}
+							</span>
+						</td>
+						<td class="px-4 py-3">
+							<span
+								class="px-2 py-1 text-xs uppercase font-bold tracking-wide rounded-sm sev-{{ .Severity }}">{{
+								.Severity }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="text-gray-600">{{ .InstalledVersion }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="text-green-600">{{ .FixedVersion }}</span>
+						</td>
+					</tr>
+
+					<tr>
+						<td colspan="5"
+							class="px-4 py-3">
+							<details class="print:details-content:[content-visibility:visible]">
+								<summary class="cursor-pointer">
+									<span class="border-b">{{ .Title }}</span>
+									(<time datetime="">{{ .PublishedDate | date $DateTime }}</time>)
+								</summary>
+
+								{{ .Description }}
+							</details>
+						</td>
+					</tr>
+					{{- end }}
+				</tbody>
+				{{- else }}
+				<div class="p-12 text-center">
+					<span class="text-gray-600 font-bold">No vulnerabilities found</span>
+				</div>
+				{{- end }}
+			</table>
+		</div>
+		{{- end }}
+
+		<h2 class="text-2xl font-bold">Misconfigurations</h2>
+
+		{{- range . }}
+		<div class="bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none overflow-auto">
+			<div class="bg-slate-50 font-bold px-4 py-3">{{ .Type }}</div>
+
+			{{- if (gt (len .Misconfigurations ) 0) }}
+			<table class="w-full border-t border-gray-200 border-collapse text-xs">
+				<thead class="bg-slate-100 uppercase font-bold tracking-wide">
+					<tr>
+						<th class="w-1/5 px-4 py-3 text-start">Type</th>
+						<th class="w-1/5 px-4 py-3 text-start">Misconfiguration ID</th>
+						<th class="w-1/5 px-4 py-3 text-start">Severity</th>
+						<th class="w-1/5 px-4 py-3 text-start">Check</th>
+						<th class="w-1/5 px-4 py-3 text-start">Message</th>
+					</tr>
+				</thead>
+
+				<tbody class="align-text-top">
+					{{- range .Misconfigurations }}
+					<tr class="border-t border-gray-200">
+						<td class="px-4 py-3">
+							<span class="font-bold"
+								title="{{ .Type }}">{{ .Type }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="font-mono font-bold text-blue-600"
+								title="{{ .Fingerprint }}">
+								{{- if .PrimaryURL }}
+								<a href="{{ .PrimaryURL }}"
+									target="_blank"
+									class="border-b">
+									{{ .ID }}</a>
+								{{- else }}
+								{{ .ID }}
+								{{- end }}
+							</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="px-2 py-1 text-xs uppercase font-bold tracking-wide rounded-sm"
+								data-severity="{{ .Severity }}">{{
+								.Severity }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="text-gray-600">{{ .Title }}</span>
+						</td>
+						<td class="px-4 py-3">
+							<span class="text-green-600">{{ .Message }}</span>
+						</td>
+					</tr>
+
+					<tr>
+						<td colspan="5"
+							class="px-4 py-3">
+							<p class="font-bold">{{ .Title }}</p>
+							<!-- {{- if .Description }}
+							<pre class="description">{{ .Description }}</pre>
+							{{- end }} -->
+						</td>
+					</tr>
+					{{- end }}
+				</tbody>
+			</table>
+			{{- else }}
+			<div class="p-12 text-center border-t border-gray-200">
+				<span class="text-gray-600 font-bold">No misconfigurations found</span>
+			</div>
+			{{- end }}
+		</div>
+		{{- end }}
+
+		<h2 class="text-2xl font-bold">Licenses</h2>
+
+		<!-- Report Footer -->
+		<footer></footer>
+	</main>
+</body>
+
+</html>

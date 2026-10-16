@@ -1,0 +1,17 @@
+services:
+  trivy:
+    image: aquasec/trivy
+    volumes:
+      - cache:/root/.cache
+      - ./report.template.html:/report.tpl
+      - ./data:/data
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - sbom
+      - --format=template
+      - --template=@report.tpl
+      - --output=/data/report.html
+      - /data/spdx.json
+
+volumes:
+  cache:
