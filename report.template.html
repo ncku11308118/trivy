@@ -31,7 +31,6 @@
 	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 	<style>
 		:root {
-			--primary: #2563eb;
 			--critical: #991b1b;
 			--critical-bg: #fee2e2;
 			--high: #c2410c;
@@ -42,11 +41,6 @@
 			--low-bg: #dbeafe;
 			--unknown: #475569;
 			--unknown-bg: #f1f5f9;
-		}
-
-		body {
-			-webkit-print-color-adjust: exact;
-			print-color-adjust: exact;
 		}
 
 		.sev-CRITICAL {
@@ -93,10 +87,6 @@
 				break-inside: avoid;
 			}
 		}
-
-		.metadata-grid {
-			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		}
 	</style>
 </head>
 
@@ -117,7 +107,10 @@
 			<div class="flex flex-wrap gap-4">
 				<div class="flex-1 grid gap-1">
 					<div class="text-xs font-bold text-gray-600 uppercase tracking-wide">ID</div>
-					<div>{{ $reportID }}</div>
+					<div>
+						<code
+							class="inline-block min-w-0 bg-slate-50 border border-gray-200 rounded-sm px-1 wrap-anywhere font-[monospace]">{{ $reportID }}</code>
+					</div>
 				</div>
 				<div class="flex-1 grid gap-1">
 					<div class="text-xs font-bold text-gray-600 uppercase tracking-wide">Time</div>
@@ -142,15 +135,14 @@
 		<!-- Summary Statistics Grid -->
 		<div class="flex flex-wrap gap-4 print:grid">
 			<div
-				class="flex-1 basis-xs relative grid gap-y-2 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden print:grid-cols-4 print:grid-rows-2 print:gap-y-0 print:ps-18">
+				class="flex-1 basis-xs relative grid gap-y-2 bg-white border border-gray-200 rounded-xl shadow-xs print:shadow-none p-6 overflow-hidden print:grid-cols-2 print:grid-rows-2 print:gap-y-0 print:p-4 print:ps-18">
 				<div class="font-bold tracking-wide">Critical</div>
-				<div
-					class="text-4xl font-bold text-red-600 print:col-span-3 print:row-span-2 print:self-center print:text-end">
+				<div class="text-4xl font-bold text-red-600 print:row-span-2 print:self-center print:text-end">
 					{{ $severityCritical }}
 				</div>
 				<div class="text-xs">CVSS score between 9.0 and 10.0</div>
 				<div
-					class="absolute size-10 top-4 right-4 bg-red-500/10 p-2 rounded-lg text-red-600 print:inset-4 print:right-auto print:my-auto">
+					class="absolute size-fit top-4 right-4 bg-red-500/10 p-2 rounded-lg text-red-600 print:inset-4 print:right-auto print:my-auto">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
